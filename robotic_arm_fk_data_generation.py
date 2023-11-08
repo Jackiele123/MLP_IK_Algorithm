@@ -2,7 +2,14 @@ import numpy as np
 
 # DH parameters extracted from the JavaScript file
 dh_parameters = [{'d': 87, 'a': 35, 'theta': 0, 'alpha': 1.5707963267948966}, {'d': 0, 'a': 147.25, 'theta': 1.5707963267948966, 'alpha': 0}, {'d': 0, 'a': 55.5, 'theta': -3.141592653589793, 'alpha': 1.5707963267948966}, {'d': 141.6, 'a': 0, 'theta': 0, 'alpha': -1.5707963267948966}, {'d': 0, 'a': 0, 'theta': 0, 'alpha': 1.5707963267948966}, {'d': 80, 'a': 0, 'theta': 0, 'alpha': 0}]
-constraints = [{'min': -3.141592653589793/2, 'max': 3.141592653589793}, {'min': -3.141592653589793, 'max': 3.141592653589793}, {'min': -3.141592653589793, 'max': 3.141592653589793}, {'min': -3.141592653589793, 'max': 3.141592653589793}, {'min': -3.141592653589793, 'max': 3.141592653589793}, {'min': -3.141592653589793, 'max': 3.141592653589793}]
+constraints = [
+    {'min': 0, 'max': 2*np.pi},  # Joint 1: [0°, 360°]
+    {'min': -np.pi/2, 'max': np.pi/2},  # Joint 2: [-90°, 90°]
+    {'min': np.pi/2, 'max': 3*np.pi/2},  # Joint 3: [90°, 270°]
+    {'min': 0, 'max': 2*np.pi},  # Joint 4: [0°, 360°]
+    {'min': 0, 'max': 2*np.pi},  # Joint 5: [0°, 360°]
+    {'min': 0, 'max': 2*np.pi}   # Joint 6: [0°, 360°]
+]
 def compute_transformation_matrix(theta, d, a, alpha):
     """Compute the transformation matrix using the DH parameters."""
     T = np.array([
@@ -43,3 +50,5 @@ def generate_training_data(num_samples, dh_parameters):
 
 # Example usage:
 joint_angles_data, end_effector_positions_data = generate_training_data(10, dh_parameters)
+
+print(joint_angles_data*(180/np.pi), end_effector_positions_data)
