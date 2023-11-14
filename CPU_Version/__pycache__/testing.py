@@ -21,6 +21,10 @@ X_std = np.std(X, axis=0)
 y_mean = np.mean(y, axis=0)
 y_std = np.std(y, axis=0)
 
+# Normalize the data if necessary
+X = (X - X_mean) / X_std
+y = (y - y_mean) / y_std
+
 # Example usage:
 # Assuming you have the trained weights (W1, b1, W2, b2) and the mean and std for X and y
 new_position = np.array([-7.532041341
@@ -31,9 +35,10 @@ predicted_angles = MLP.predict_joint_angles(new_position, "weights\weights_epoch
 angles = []
 for r in predicted_angles:
     angles.append(r)
-    print(r*180/np.pi)
-angles.append(0)
-print(FK.forward_kinematics(angles)[0])
+#    print(r*180/np.pi)
+
+print(FK.forward_kinematics(angles))
+
 
 
 
