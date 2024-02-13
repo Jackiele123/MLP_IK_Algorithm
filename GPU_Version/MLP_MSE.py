@@ -16,7 +16,7 @@ load_dotenv()
 BUCKET_NAME = 'robotarm'
 
 # The name you want to save the PDF as in Wasabi
-FILE_NAME = 'data-1699387684828.csv'
+FILE_NAME = 'data-1699247538834.csv'
 
 
 def get_presigned_url(filename):
@@ -68,50 +68,23 @@ train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(32)  # Adjust buffer_size and batch_size as needed
 train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-# Euclidean loss function from 3D Distance between two points
-def euclidean_loss(y_true_normalized, y_pred_normalized):
-    # Denormalize the predicted and true joint angles
-    y_true_denorm = y_true_normalized * y_std_tensor + y_mean_tensor
-    y_pred_denorm = y_pred_normalized * y_std_tensor + y_mean_tensor
-
-    # Define a function to compute euclidean distance for a single example
-    def compute_distance(true_pred_pair):
-        true_angles, pred_angles = true_pred_pair[0], true_pred_pair[1]
-
-        pred_angles = tf.concat([pred_angles, tf.constant([0.0])], axis=0)
-        true_angles = tf.concat([true_angles, tf.constant([0.0])], axis=0)
-        true_position = FK.forward_kinematics(true_angles)  # This should return a tensor of shape [3]
-        pred_position = FK.forward_kinematics(pred_angles)  # This should return a tensor of shape [3]
-        
-        
-        # Compute Euclidean distance using TensorFlow operations
-        distance = tf.norm(true_position - pred_position, ord='euclidean')
-        
-        return distance
-
-    # Use tf.map_fn to apply compute_distance to each pair of true and predicted positions
-    distances = tf.map_fn(compute_distance, (y_true_denorm, y_pred_denorm), fn_output_signature=tf.float32)
-
-    # Calculate the mean of the distances
-    mean_distance = tf.reduce_mean(distances)
-    return mean_distance
-
 # Define the model
 inputs = Input(shape=(3,))
-x = Dense(64, activation='tanh')(inputs)
-outputs = Dense(5, activation='tanh')(x)
+x = Dense(64, activation='relu')(inputs)
+outputs = Dense(5, activation='relu')(x)
 model = Model(inputs=inputs, outputs=outputs)
 
-model_checkpoint_path = 'goodEpochs/model_epoch_02.h5'
-model = load_model(model_checkpoint_path, custom_objects={'euclidean_loss': euclidean_loss})
+# Compile the model with MSE loss
+# model_checkpoint_path = 'model_epoch_68.h5'
+# model = load_model(model_checkpoint_path)
+model.compile(optimizer='adam', loss='mean_squared_error')
 
-model.compile(optimizer='adam', loss=euclidean_loss)
 
 # Callback to save the model every 100 epochs
 checkpoint_cb = ModelCheckpoint('model_epoch_{epoch:02d}.h5', save_freq='epoch', save_weights_only=False)
 
 # Assuming 'last_epoch' is the epoch you last completed before saving the checkpoint
-last_epoch = 2  # for example
+last_epoch = 0  # for exampl
 new_epochs = 10000  # total epochs you want to train including the previous ones
 
 # Fit the model, specifying the initial epoch
@@ -122,13 +95,4 @@ model.fit(
     callbacks=[checkpoint_cb]
 )
 model.save('my_model.h5')
-# # Predict function
-# def predict_joint_angles(position, model):
-#     position_normalized = (position - X_mean) / X_std
-#     predicted_normalized_angles = model.predict(position_normalized)
-#     predicted_angles = predicted_normalized_angles * y_std + y_mean
-#     return predicted_angles
 
-# position = np.array([100, 100, 100])  # Example position
-# predicted_angles = predict_joint_angles(position, model)
-# print(predicted_angles)
